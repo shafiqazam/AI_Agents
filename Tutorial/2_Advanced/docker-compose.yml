@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  # Service 1: Your FastAPI Streaming Agent
+  agent-api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma_db:/app/chroma_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      # Tells our Python code where to broadcast OpenTelemetry data
+      - PHOENIX_COLLECTOR_ENDPOINT=http://phoenix-server:6006
+    depends_on:
+      - phoenix-server
+
+  # Service 2: The Phoenix Tracing Engine & UI Dashboard
+  phoenix-server:
+    image: arizephoenix/phoenix:latest
+    container_name: phoenix_observability_server
+    ports:
+      - "6006:6006"  # The web UI dashboard port
+    environment:
+      - PHOENIX_HOST=0.0.0.0
